@@ -2,6 +2,9 @@ import 'package:bitcoin_currency_app/coin_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io';
+
+import 'consts.dart';
+
 class PriceScreen extends StatefulWidget {
   @override
   _PriceScreenState createState() => _PriceScreenState();
@@ -9,6 +12,27 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
+  String bitcoinValueInUSD = '?';
+  String updTime = 'time place ';
+
+  Future getCurrencyData() async {
+    try {
+      var data = await CoinData().getCoinData();
+      setState(() {
+        bitcoinValueInUSD = data['rate'].toStringAsFixed(0);
+        updTime = data['time'];
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getCurrencyData();
+  }
 
   DropdownButton<String> getAndroidPicker() {
     List<DropdownMenuItem<String>> dropdownItems = [];
@@ -45,16 +69,16 @@ class _PriceScreenState extends State<PriceScreen> {
     );
   }
 
-  Widget getPicker(){
-    if(Platform.isIOS) return getIOSPicker();
-    if(Platform.isAndroid) return getAndroidPicker();
+  Widget getPicker() {
+    if (Platform.isIOS) return getIOSPicker();
+    if (Platform.isAndroid) return getAndroidPicker();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🤑 Coin Ticker'),
+        title: Text('Coin Ticker'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -71,7 +95,7 @@ class _PriceScreenState extends State<PriceScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  '1 BTC = ? USD',
+                  '1 BTC = $bitcoinValueInUSD USD',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.0,
