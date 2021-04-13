@@ -10,7 +10,7 @@ const List<String> currenciesList = [
   'MXN',
   'NOK',
   'NZD',
-  'KZT'
+  'KZT',
   'RUB',
   'USD',
 ];
