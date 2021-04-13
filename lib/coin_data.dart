@@ -6,15 +6,21 @@ import 'consts.dart';
 
 class CoinData {
 
-  Future getCoinData() async {
-    String requestURL = '$coinAPIURL/BTC/USD?apikey=$apiKey';
-    http.Response response = await http.get(Uri.parse(requestURL));
-    if (response.statusCode == 200) {
-      var decodedData = jsonDecode(response.body);
-      return decodedData;
-    } else {
-      print(response.statusCode);
-      throw 'Problem with the get request';
+  Future getCoinData(String selectedCurrency) async {
+    Map<String, String> cryptoPrices = {};
+    for (String crypto in cryptoList) {
+          String requestURL = '$coinAPIURL/$crypto/$selectedCurrency?apikey=$apiKey';
+      http.Response response = await http.get(Uri.parse(requestURL));
+      if (response.statusCode == 200) {
+        var decodedData = jsonDecode(response.body);
+        double lastPrice = decodedData['rate'];
+        cryptoPrices[crypto] = lastPrice.toStringAsFixed(0);
+        print('success');
+      } else {
+        print(response.statusCode);
+        throw 'Problem with the get request';
+      }
     }
+    return cryptoPrices;
   }
 }

@@ -11,16 +11,59 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  String selectedCurrency = 'USD';
-  String bitcoinValueInUSD = '?';
-  String updTime = 'time place ';
+  String selectedCurrency = 'AUD';
 
-  Future getCurrencyData() async {
+  DropdownButton<String> androidDropdown() {
+    List<DropdownMenuItem<String>> dropdownItems = [];
+    for (String currency in currenciesList) {
+      var newItem = DropdownMenuItem(
+        child: Text(currency),
+        value: currency,
+      );
+      dropdownItems.add(newItem);
+    }
+
+    return DropdownButton<String>(
+      value: selectedCurrency,
+      items: dropdownItems,
+      onChanged: (value) {
+        setState(() {
+          selectedCurrency = value;
+          getData();
+        });
+      },
+    );
+  }
+
+  CupertinoPicker iOSPicker() {
+    List<Text> pickerItems = [];
+    for (String currency in currenciesList) {
+      pickerItems.add(Text(currency));
+    }
+
+    return CupertinoPicker(
+      backgroundColor: Colors.lightBlue,
+      itemExtent: 32.0,
+      onSelectedItemChanged: (selectedIndex) {
+        setState(() {
+          selectedCurrency = currenciesList[selectedIndex];
+          getData();
+        });
+      },
+      children: pickerItems,
+    );
+  }
+
+  Map<String, String> coinValues = {};
+  bool isWaiting = false;
+
+  void getData() async {
+    isWaiting = true;
     try {
-      var data = await CoinData().getCoinData();
+      var data = await CoinData().getCoinData(selectedCurrency);
+      isWaiting = false;
       setState(() {
-        bitcoinValueInUSD = data['rate'].toStringAsFixed(0);
-        updTime = data['time'];
+        coinValues = data;
       });
     } catch (e) {
       print(e);
@@ -29,90 +72,83 @@ class _PriceScreenState extends State<PriceScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    getCurrencyData();
+    getData();
   }
 
-  DropdownButton<String> getAndroidPicker() {
-    List<DropdownMenuItem<String>> dropdownItems = [];
-    for (String s in currenciesList) {
-      var newItem = DropdownMenuItem(
-        child: Text(s),
-        value: s,
+  Column makeCards() {
+    List<CryptoCard> cryptoCards = [];
+    for (String crypto in cryptoList) {
+      cryptoCards.add(
+        CryptoCard(
+          cryptoCurrency: crypto,
+          selectedCurrency: selectedCurrency,
+          value: isWaiting ? '?' : coinValues[crypto],
+        ),
       );
-      dropdownItems.add(newItem);
     }
-    return DropdownButton<String>(
-      value: selectedCurrency,
-      items: dropdownItems,
-      onChanged: (value) {
-        setState(() {
-          selectedCurrency = value;
-        });
-        print(value);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: cryptoCards,
     );
-  }
-
-  CupertinoPicker getIOSPicker() {
-    List<Text> pickerItems = [];
-    for (String s in currenciesList) {
-      pickerItems.add(Text(s));
-    }
-    return CupertinoPicker(
-      itemExtent: 32,
-      onSelectedItemChanged: (index) {
-        print(index);
-      },
-      children: pickerItems,
-    );
-  }
-
-  Widget getPicker() {
-    if (Platform.isIOS) return getIOSPicker();
-    if (Platform.isAndroid) return getAndroidPicker();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Coin Ticker'),
+        title: Text('🤑 Coin Ticker'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = $bitcoinValueInUSD USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          makeCards(),
           Container(
             height: 150.0,
             alignment: Alignment.center,
             padding: EdgeInsets.only(bottom: 30.0),
             color: Colors.lightBlue,
-            child: getPicker(),
+            child: Platform.isIOS ? iOSPicker() : androidDropdown(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CryptoCard extends StatelessWidget {
+  const CryptoCard({
+    this.value,
+    this.selectedCurrency,
+    this.cryptoCurrency,
+  });
+
+  final String value;
+  final String selectedCurrency;
+  final String cryptoCurrency;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
+      child: Card(
+        color: Colors.lightBlueAccent,
+        elevation: 5.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+          child: Text(
+            '1 $cryptoCurrency = $value $selectedCurrency',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
